@@ -382,3 +382,83 @@ spec:
         name: nginx
 `)
 }
+
+func TestReplacementTransformerRegex(t *testing.T) {
+	th := kusttest_test.MakeEnhancedHarness(t).
+		BuildGoPlugin("someteam.example.com", "v1", "ReplacementTransformer")
+	defer th.Reset()
+
+	rm := th.LoadAndRunTransformer(`
+apiVersion: someteam.example.com/v1
+kind: ReplacementTransformer
+metadata:
+  name: notImportantHere
+replacements:
+- source:
+    value: regexedtag
+  target:
+    objref:
+      kind: Deployment
+    fieldrefs:
+    - spec.template.spec.containers[name=nginx-latest].image%TAG%
+- source:
+    value: postgres:latest
+  target:
+    objref:
+      kind: Deployment
+    fieldrefs:
+    - spec.template.spec.containers.3.image
+`, `
+group: apps
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: deploy1
+spec:
+  template:
+    spec:
+      containers:
+      - image: nginx:1.7.9
+        name: nginx-tagged
+      - image: nginx:TAG
+        name: nginx-latest
+      - image: foobar:1
+        name: replaced-with-digest
+      - image: postgres:1.8.0
+        name: postgresdb
+      initContainers:
+      - image: nginx
+        name: nginx-notag
+      - image: nginx@sha256:111111111111111111
+        name: nginx-sha256
+      - image: alpine:1.8.0
+        name: init-alpine
+`)
+
+	th.AssertActualEqualsExpected(rm, `
+apiVersion: v1
+group: apps
+kind: Deployment
+metadata:
+  name: deploy1
+spec:
+  template:
+    spec:
+      containers:
+      - image: nginx:1.7.9
+        name: nginx-tagged
+      - image: nginx:regexedtag
+        name: nginx-latest
+      - image: foobar:1
+        name: replaced-with-digest
+      - image: postgres:latest
+        name: postgresdb
+      initContainers:
+      - image: nginx
+        name: nginx-notag
+      - image: nginx@sha256:111111111111111111
+        name: nginx-sha256
+      - image: alpine:1.8.0
+        name: init-alpine
+`)
+}

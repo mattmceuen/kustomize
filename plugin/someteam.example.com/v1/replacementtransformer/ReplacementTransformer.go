@@ -16,6 +16,8 @@ import (
 
 var (
 	pattern = regexp.MustCompile(`(\S+)\[(\S+)=(\S+)\]`)
+	// substring substitutions are appended to paths as: ...%VARNAME%
+	substringPatternRegex = regexp.MustCompile(`(\S+)%(\S+)%$`)
 )
 
 // Find matching image declarations and replace
@@ -67,7 +69,6 @@ func (p *plugin) Transform(m resmap.ResMap) (err error) {
 		if r.Source.Value != "" {
 			replacement = r.Source.Value
 		}
-		fmt.Printf("The replacement is %s\n", replacement)
 		err = substitute(m, r.Target, replacement)
 		if err != nil {
 			return err
@@ -137,8 +138,51 @@ func updateField(m interface{}, pathToField []string, replacement interface{}) e
 	}
 }
 
+// Extract the substring pattern (if present) from the target path spec
+func extractSubstringPattern(path string) (extractedPath string, substringPattern string, err error) {
+	substringPattern = ""
+	groups := substringPatternRegex.FindStringSubmatch(path)
+	if groups != nil {
+		path = groups[1]
+		substringPattern = groups[2]
+	}
+	return path, substringPattern, nil
+}
+
+// apply a substring substitution based on a pattern
+func applySubstringPattern(target interface{}, replacement interface{},
+	substringPattern string) (regexedReplacement interface{}, err error) {
+	// no regex'ing needed if there is no substringPattern
+	if substringPattern == "" {
+		return replacement, nil
+	}
+
+	switch replacement.(type) {
+	case string:
+	default:
+		return nil, fmt.Errorf("pattern-based substitution can only be applied with string replacement values")
+	}
+
+	switch target.(type) {
+	case string:
+	default:
+		return nil, fmt.Errorf("pattern-based substitution can only be applied to string target fields")
+	}
+
+	p := regexp.MustCompile(substringPattern)
+	if !p.MatchString(target.(string)) {
+		return nil, fmt.Errorf("pattern %s not found in target value %s", pattern, target.(string))
+	}
+	return p.ReplaceAllString(target.(string), replacement.(string)), nil
+}
+
 func updateMapField(m map[string]interface{}, pathToField []string, replacement interface{}) error {
 	path, key, value, isArray := getFirstPathSegment(pathToField[0])
+
+	path, substringPattern, err := extractSubstringPattern(path)
+	if err != nil {
+		return err
+	}
 
 	v, found := m[path]
 	if !found {
@@ -148,12 +192,16 @@ func updateMapField(m map[string]interface{}, pathToField []string, replacement 
 
 	if len(pathToField) == 1 {
 		if !isArray {
+			replacement, err = applySubstringPattern(m[path], replacement, substringPattern)
+			if err != nil {
+				return err
+			}
 			m[path] = replacement
 			return nil
 		}
 		switch typedV := v.(type) {
 		case nil:
-			fmt.Printf("nil vlaue at `%s` ignored in mutation attempt", strings.Join(pathToField, "."))
+			fmt.Printf("nil value at `%s` ignored in mutation attempt", strings.Join(pathToField, "."))
 		case []interface{}:
 			for i := range typedV {
 				item := typedV[i]
