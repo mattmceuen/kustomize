@@ -11,11 +11,11 @@ import (
 
 func TestReplacementTransformer(t *testing.T) {
 	th := kusttest_test.MakeEnhancedHarness(t).
-		BuildGoPlugin("someteam.example.com", "v1", "ReplacementTransformer")
+		BuildGoPlugin("airshipit.org", "v1beta1", "ReplacementTransformer")
 	defer th.Reset()
 
 	rm := th.LoadAndRunTransformer(`
-apiVersion: someteam.example.com/v1
+apiVersion: airshipit.org/v1beta1
 kind: ReplacementTransformer
 metadata:
   name: notImportantHere
@@ -91,11 +91,11 @@ spec:
 
 func TestReplacementTransformerComplexType(t *testing.T) {
 	th := kusttest_test.MakeEnhancedHarness(t).
-		BuildGoPlugin("someteam.example.com", "v1", "ReplacementTransformer")
+		BuildGoPlugin("airshipit.org", "v1beta1", "ReplacementTransformer")
 	defer th.Reset()
 
 	rm := th.LoadAndRunTransformer(`
-apiVersion: someteam.example.com/v1
+apiVersion: airshipit.org/v1beta1
 kind: ReplacementTransformer
 metadata:
   name: notImportantHere
@@ -167,11 +167,11 @@ spec:
 
 func TestReplacementTransformerFromConfigMap(t *testing.T) {
 	th := kusttest_test.MakeEnhancedHarness(t).
-		BuildGoPlugin("someteam.example.com", "v1", "ReplacementTransformer")
+		BuildGoPlugin("airshipit.org", "v1beta1", "ReplacementTransformer")
 	defer th.Reset()
 
 	rm := th.LoadAndRunTransformer(`
-apiVersion: someteam.example.com/v1
+apiVersion: airshipit.org/v1beta1
 kind: ReplacementTransformer
 metadata:
   name: notImportantHere
@@ -274,7 +274,7 @@ metadata:
 
 func TestReplacementTransformerWithDiamondShape(t *testing.T) {
 	th := kusttest_test.MakeEnhancedHarness(t).
-		BuildGoPlugin("someteam.example.com", "v1", "ReplacementTransformer")
+		BuildGoPlugin("airshipit.org", "v1beta1", "ReplacementTransformer")
 	defer th.Reset()
 
 	th.WriteF("/app/base/deployment.yaml",
@@ -309,7 +309,7 @@ transformers:
 
 	th.WriteF("/app/a/replacement.yaml",
 		`
-apiVersion: someteam.example.com/v1
+apiVersion: airshipit.org/v1beta1
 kind: ReplacementTransformer
 metadata:
   name: notImportantHere
@@ -334,7 +334,7 @@ transformers:
 
 	th.WriteF("/app/b/replacement.yaml",
 		`
-apiVersion: someteam.example.com/v1
+apiVersion: airshipit.org/v1beta1
 kind: ReplacementTransformer
 metadata:
   name: notImportantHere
@@ -385,11 +385,11 @@ spec:
 
 func TestReplacementTransformerRegex(t *testing.T) {
 	th := kusttest_test.MakeEnhancedHarness(t).
-		BuildGoPlugin("someteam.example.com", "v1", "ReplacementTransformer")
+		BuildGoPlugin("airshipit.org", "v1beta1", "ReplacementTransformer")
 	defer th.Reset()
 
 	rm := th.LoadAndRunTransformer(`
-apiVersion: someteam.example.com/v1
+apiVersion: airshipit.org/v1beta1
 kind: ReplacementTransformer
 metadata:
   name: notImportantHere
