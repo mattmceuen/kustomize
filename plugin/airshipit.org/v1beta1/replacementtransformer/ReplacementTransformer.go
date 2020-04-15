@@ -171,7 +171,7 @@ func applySubstringPattern(target interface{}, replacement interface{},
 
 	p := regexp.MustCompile(substringPattern)
 	if !p.MatchString(target.(string)) {
-		return nil, fmt.Errorf("pattern %s not found in target value %s", pattern, target.(string))
+		return nil, fmt.Errorf("pattern %s not found in target value %s", substringPattern, target.(string))
 	}
 	return p.ReplaceAllString(target.(string), replacement.(string)), nil
 }
